@@ -153,30 +153,7 @@ CREATE TABLE bookings (
 4. **Extensibility:** Clear separation between layers
 5. **User Experience:** Easy console interface
 
-### 🚀 How to Run the Project
 
-**Requirements:**
-1. Java 8 or higher
-2. PostgreSQL with pgAdmin
-3. PostgreSQL JDBC driver
-
-**Start Steps:**
-
-1. **Set up database:**
-   ```sql
-   -- Run database_setup.sql in pgAdmin
-   ```
-
-2. **Compile project:**
-   ```bash
-   cd C:\Users\Ferumm\IdeaProjects\Assignment3
-   javac -cp "src;postgresql-42.2.23.jar" src/**/*.java src/*.java
-   ```
-
-3. **Run application:**
-   ```bash
-   java -cp "src;postgresql-42.2.23.jar" Main
-   ```
 
 **🎯 What the program can do:**
 - Register new users (customers and admins)
@@ -185,13 +162,6 @@ CREATE TABLE bookings (
 - Customers can view shows and book seats
 - Discount system for regular customers
 - Validation of all operations
-
-### 🛠 Technologies
-- **Java 8+**
-- **PostgreSQL** - relational database
-- **JDBC** - for database work
-- **MVC Pattern** - design pattern
-- **Interfaces** - for flexibility and testing
 
 ### 🎓 Features for Beginners
 
