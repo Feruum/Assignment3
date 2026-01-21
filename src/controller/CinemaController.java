@@ -4,10 +4,7 @@ import service.*;
 import repository.*;
 import entity.*;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import java.util.List;
 
 public class CinemaController {
 

@@ -3,13 +3,15 @@ package service;
 import entity.Session;
 import repository.BookingRepository;
 import repository.SessionRepository;
-
+import repository.HallRepository;
+import entity.Hall;
 import java.time.LocalDateTime;
 
 public class BookingService {
 
     private BookingRepository bookingRepo = new BookingRepository();
     private SessionRepository sessionRepo = new SessionRepository();
+    private HallRepository hallRepo = new HallRepository();
 
     public void bookSeat(int sessionId, int seat, UserService userService) {
 
@@ -59,15 +61,24 @@ public class BookingService {
             return;
         }
 
+        Hall hall = hallRepo.getHallById(session.getHallId());
+        if (hall == null) {
+            System.out.println("Hall not found");
+            return;
+        }
+
+        int totalSeats = hall.getTotalSeats();
+
         System.out.println("Available seats:");
 
-        for (int seat = 1; seat <= 30; seat++) {
+        for (int seat = 1; seat <= totalSeats; seat++) {
             if (bookingRepo.isSeatFree(sessionId, seat)) {
                 System.out.print(seat + " ");
             }
         }
         System.out.println();
     }
+
     public void cancelBooking(int sessionId, int seatNumber, UserService userService) {
 
         if (!userService.isLoggedIn()) {
