@@ -28,6 +28,9 @@ public class Session {
     public LocalDateTime getStartTime() {
         return startTime;
     }
+    public double getPrice() {
+        return price;
+    }
 
     public int getHallId() {
         return hallId;

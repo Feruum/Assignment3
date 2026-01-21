@@ -3,22 +3,21 @@ package service;
 import entity.Session;
 import repository.BookingRepository;
 import repository.SessionRepository;
-import service.UserService;
+
 import java.time.LocalDateTime;
 
 public class BookingService {
 
-    BookingRepository bookingRepo = new BookingRepository();
-    SessionRepository sessionRepo = new SessionRepository();
+    private BookingRepository bookingRepo = new BookingRepository();
+    private SessionRepository sessionRepo = new SessionRepository();
 
     public void bookSeat(int sessionId, int seat, UserService userService) {
-        // Check if user is logged in
+
         if (!userService.isLoggedIn()) {
-            System.out.println("Please login to book seats");
+            System.out.println("Please login first");
             return;
         }
 
-        // Check if session exists and not started
         Session session = sessionRepo.getSessionById(sessionId);
         if (session == null) {
             System.out.println("Session not found");
@@ -26,52 +25,65 @@ public class BookingService {
         }
 
         if (session.getStartTime().isBefore(LocalDateTime.now())) {
-            System.out.println("Cannot book seats for sessions that have already started");
+            System.out.println("Session already started");
             return;
         }
 
-        // Check if seat is available
         if (!bookingRepo.isSeatFree(sessionId, seat)) {
-            System.out.println("Seat already taken");
+            System.out.println("Seat is already taken");
             return;
         }
 
-        // Calculate price with discount
-        double basePrice = session.price;
+        double basePrice = session.getPrice();
         double discount = userService.calculateDiscount(basePrice);
         double finalPrice = basePrice - discount;
 
-        // Book the seat
-        String customerName = userService.getCurrentUser().getUsername();
-        bookingRepo.book(sessionId, seat, customerName);
+        String username = userService.getCurrentUser().getUsername();
+        bookingRepo.book(sessionId, seat, username);
 
-        // Update user booking count for loyalty
         userService.incrementBookingCount();
 
-        System.out.println("Seat booked successfully!");
-        System.out.println("Base price: $" + basePrice);
+        System.out.println("Booking successful");
+        System.out.println("Price: $" + basePrice);
         if (discount > 0) {
-            System.out.println("Discount applied: $" + discount);
+            System.out.println("Discount: $" + discount);
         }
         System.out.println("Final price: $" + finalPrice);
-        System.out.println("Loyalty points earned: 1 (Total: " + userService.getCurrentUser().getBookingCount() + ")");
     }
 
-    // Get available seats for session
     public void showAvailableSeats(int sessionId) {
+
         Session session = sessionRepo.getSessionById(sessionId);
         if (session == null) {
             System.out.println("Session not found");
             return;
         }
 
-        System.out.println("Available seats for session " + sessionId + ":");
-        // Show all available seats (assuming 100 seats per hall)
-        for (int seat = 1; seat <= 100; seat++) {
+        System.out.println("Available seats:");
+
+        for (int seat = 1; seat <= 30; seat++) {
             if (bookingRepo.isSeatFree(sessionId, seat)) {
                 System.out.print(seat + " ");
             }
         }
         System.out.println();
     }
+    public void cancelBooking(int sessionId, int seatNumber, UserService userService) {
+
+        if (!userService.isLoggedIn()) {
+            System.out.println("Please login first");
+            return;
+        }
+
+        String customerName = userService.getCurrentUser().getUsername();
+
+        boolean cancelled = bookingRepo.cancelBooking(sessionId, seatNumber, customerName);
+
+        if (cancelled) {
+            System.out.println("Booking cancelled successfully");
+        } else {
+            System.out.println("Booking not found or not yours");
+        }
+    }
+
 }
