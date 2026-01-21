@@ -2,6 +2,8 @@ package controller;
 
 import entity.Booking;
 import entity.Session;
+import entity.Movie;
+import entity.Hall;
 import service.BookingService;
 import service.UserService;
 import repository.BookingRepository;
@@ -37,8 +39,8 @@ public class CinemaController {
      * Has main program loop
      */
     public void start() {
-        System.out.println("=== СИСТЕМА БРОНИРОВАНИЯ КИНОБИЛЕТОВ ===");
-        System.out.println("Добро пожаловать в систему управления кинотеатром!");
+        System.out.println("=== CINEMA BOOKING SYSTEM ===");
+        System.out.println("Welcome to the Cinema Management System!");
 
         // Main program loop
         while (true) {
@@ -72,12 +74,12 @@ public class CinemaController {
      * Show login menu for not logged users
      */
     private void showAuthenticationMenu() {
-        System.out.println("\n=== МЕНЮ АУТЕНТИФИКАЦИИ ===");
-        System.out.println("1. Зарегистрироваться как клиент");
-        System.out.println("2. Зарегистрироваться как администратор");
-        System.out.println("3. Войти в систему");
-        System.out.println("0. Выход");
-        System.out.print("Выберите опцию: ");
+        System.out.println("\n=== AUTHENTICATION MENU ===");
+        System.out.println("1. Register as Customer");
+        System.out.println("2. Register as Admin");
+        System.out.println("3. Login");
+        System.out.println("0. Exit");
+        System.out.print("Choose an option: ");
     }
 
     /**
@@ -86,23 +88,23 @@ public class CinemaController {
      */
     private void showMainMenu() {
         System.out.println("\n=== MAIN MENU ===");
-        System.out.println("You logged as: " + userService.getCurrentUser().getUsername() +
-                          " (Role: " + userService.getCurrentUser().getRole() + ")");
+        System.out.println("Logged in as: " + userService.getCurrentUser().getUsername() +
+                " (Role: " + userService.getCurrentUser().getRole() + ")");
 
         // Different menus for different roles
         if (userService.isAdmin()) {
             // Admin menu
-            System.out.println("1. Add movie");
-            System.out.println("2. Add hall");
-            System.out.println("3. View all halls");
-            System.out.println("4. Add session");
-            System.out.println("5. View all sessions");
+            System.out.println("1. Add Movie");
+            System.out.println("2. Add Hall");
+            System.out.println("3. View All Halls");
+            System.out.println("4. Add Session");
+            System.out.println("5. View All Sessions");
         } else {
             // Customer menu
-            System.out.println("1. View available sessions");
-            System.out.println("2. View available seats for session");
-            System.out.println("3. Book seat");
-            System.out.println("4. My bookings");
+            System.out.println("1. View Available Sessions");
+            System.out.println("2. View Available Seats for Session");
+            System.out.println("3. Book a Seat");
+            System.out.println("4. My Bookings");
         }
         System.out.println("9. Logout");
         System.out.println("0. Exit");
@@ -125,10 +127,10 @@ public class CinemaController {
                 loginExistingUser();
                 break;
             case 0:
-                System.out.println("До свидания!");
+                System.out.println("Goodbye!");
                 break;
             default:
-                System.out.println("Неверная опция. Попробуйте еще раз.");
+                System.out.println("Invalid option. Please try again.");
         }
     }
 
@@ -169,10 +171,10 @@ public class CinemaController {
                 userService.logout();
                 break;
             case 0:
-                System.out.println("До свидания!");
+                System.out.println("Goodbye!");
                 break;
             default:
-                System.out.println("Неверная опция. Попробуйте еще раз.");
+                System.out.println("Invalid option. Please try again.");
         }
     }
 
@@ -198,10 +200,10 @@ public class CinemaController {
                 userService.logout();
                 break;
             case 0:
-                System.out.println("До свидания!");
+                System.out.println("Goodbye!");
                 break;
             default:
-                System.out.println("Неверная опция. Попробуйте еще раз.");
+                System.out.println("Invalid option. Please try again.");
         }
     }
 
@@ -210,9 +212,9 @@ public class CinemaController {
      * @param role user role (customer or admin)
      */
     private void registerNewUser(String role) {
-        System.out.print("Введите имя пользователя: ");
+        System.out.print("Enter username: ");
         String username = scanner.nextLine();
-        System.out.print("Введите пароль: ");
+        System.out.print("Enter password: ");
         String password = scanner.nextLine();
 
         userService.register(username, password, role);
@@ -222,9 +224,9 @@ public class CinemaController {
      * Login existing user
      */
     private void loginExistingUser() {
-        System.out.print("Введите имя пользователя: ");
+        System.out.print("Enter username: ");
         String username = scanner.nextLine();
-        System.out.print("Введите пароль: ");
+        System.out.print("Enter password: ");
         String password = scanner.nextLine();
 
         userService.login(username, password);
@@ -234,12 +236,12 @@ public class CinemaController {
      * Add new movie (admin only)
      */
     private void addNewMovie() {
-        System.out.print("Введите название фильма: ");
+        System.out.print("Enter movie title: ");
         String title = scanner.nextLine();
-        System.out.print("Введите продолжительность фильма (в минутах): ");
+        System.out.print("Enter movie duration (in minutes): ");
         int duration = scanner.nextInt();
         scanner.nextLine(); // clear buffer
-        System.out.print("Введите жанр фильма: ");
+        System.out.print("Enter movie genre: ");
         String genre = scanner.nextLine();
 
         movieRepository.addMovie(title, duration, genre);
@@ -250,115 +252,98 @@ public class CinemaController {
      */
     private void addNewSession() {
         // Show available movies
-        System.out.println("\n=== ДОСТУПНЫЕ ФИЛЬМЫ ===");
-        List<entity.Movie> movies = movieRepository.getAllMovies();
+        System.out.println("\n=== AVAILABLE MOVIES ===");
+        List<Movie> movies = movieRepository.getAllMovies();
         if (movies.isEmpty()) {
-            System.out.println("Нет доступных фильмов. Сначала добавьте фильмы.");
+            System.out.println("No movies available. Please add movies first.");
             return;
         }
-        for (entity.Movie movie : movies) {
-            System.out.println("ID: " + movie.getId() + ", Название: " + movie.getTitle() +
-                             ", Длительность: " + movie.getDuration() + " мин, Жанр: " + movie.getGenre());
+        for (Movie movie : movies) {
+            System.out.println("ID: " + movie.getId() + ", Title: " + movie.getTitle() +
+                    ", Duration: " + movie.getDuration() + " min, Genre: " + movie.getGenre());
         }
 
-        System.out.print("Введите ID фильма: ");
+        System.out.print("Enter Movie ID: ");
         int movieId = scanner.nextInt();
 
         // Show available halls
-        System.out.println("\n=== ДОСТУПНЫЕ ЗАЛЫ ===");
-        List<entity.Hall> halls = hallRepository.getAllHalls();
+        System.out.println("\n=== AVAILABLE HALLS ===");
+        List<Hall> halls = hallRepository.getAllHalls();
         if (halls.isEmpty()) {
-            System.out.println("Нет доступных залов. Сначала добавьте залы.");
+            System.out.println("No halls available. Please add halls first.");
             return;
         }
-        for (entity.Hall hall : halls) {
-            System.out.println("ID: " + hall.getId() + ", Название: " + hall.getName() +
-                             ", Мест: " + hall.getTotalSeats());
+        for (Hall hall : halls) {
+            System.out.println("ID: " + hall.getId() + ", Name: " + hall.getName() +
+                    ", Seats: " + hall.getTotalSeats());
         }
 
-        System.out.print("Введите цену билета: ");
+        System.out.print("Enter Ticket Price: ");
         double price = scanner.nextDouble();
         scanner.nextLine(); // clear buffer
 
-        System.out.print("Введите время начала сеанса (гггг-мм-дд чч:мм): ");
+        System.out.print("Enter session start time (yyyy-MM-dd HH:mm): ");
         String timeString = scanner.nextLine();
         LocalDateTime startTime = LocalDateTime.parse(timeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
-        System.out.print("Введите ID зала: ");
+        System.out.print("Enter Hall ID: ");
         int hallId = scanner.nextInt();
 
         sessionRepository.addSession(movieId, price, startTime, hallId);
     }
 
     /**
-     * Show all sessions (for admin)
+     * Show all sessions (for admin and customer)
      */
-    private void displayAllSessions() {
+    private void displayAvailableSessions() {
         List<Session> sessions = sessionRepository.getAvailableSessions();
-        System.out.println("\n=== ДОСТУПНЫЕ СЕАНСЫ ===");
+        System.out.println("\n=== AVAILABLE SESSIONS ===");
         if (sessions.isEmpty()) {
-            System.out.println("Нет доступных сеансов.");
+            System.out.println("No sessions available.");
         } else {
             for (Session session : sessions) {
                 System.out.println("ID: " + session.id +
-                                 ", Фильм ID: " + session.movieId +
-                                 ", Цена: $" + session.price +
-                                 ", Начало: " + session.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) +
-                                 ", Зал: " + session.getHallId());
+                        ", Movie ID: " + session.movieId +
+                        ", Price: $" + session.price +
+                        ", Start: " + session.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) +
+                        ", Hall: " + session.getHallId());
             }
         }
     }
 
-    /**
-     * Show available sessions for customers
-     */
-    private void displayAvailableSessions() {
-        List<Session> sessions = sessionRepository.getAvailableSessions();
-        System.out.println("\n=== ДОСТУПНЫЕ СЕАНСЫ ===");
-        if (sessions.isEmpty()) {
-            System.out.println("Нет доступных сеансов.");
-        } else {
-            for (Session session : sessions) {
-                System.out.println("ID: " + session.id +
-                                 ", Фильм ID: " + session.movieId +
-                                 ", Цена: $" + session.price +
-                                 ", Начало: " + session.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) +
-                                 ", Зал: " + session.getHallId());
-            }
-        }
+    private void displayAllSessions() {
+        displayAvailableSessions();
     }
 
     /**
      * Book seat for current user
      */
     private void bookSeatForUser() {
-        System.out.print("Введите ID сеанса: ");
+        System.out.print("Enter Session ID: ");
         int sessionId = scanner.nextInt();
-        System.out.print("Введите номер места: ");
+        System.out.print("Enter Seat Number: ");
         int seatNumber = scanner.nextInt();
 
         bookingService.bookSeat(sessionId, seatNumber, userService);
     }
 
     /**
-     * Показывает бронирования текущего пользователя
+     * Shows bookings of the current user
      */
     private void displayUserBookings() {
-        System.out.println("Загрузка ваших бронирований...");
-        // Get current user name
+        System.out.println("Loading your bookings...");
         String currentUsername = userService.getCurrentUser().getUsername();
 
-        // Get user bookings list
         BookingRepository bookingRepo = new BookingRepository();
         List<Booking> userBookings = bookingRepo.getBookingsByCustomer(currentUsername);
 
         if (userBookings.isEmpty()) {
-            System.out.println("У вас нет активных бронирований.");
+            System.out.println("You have no active bookings.");
         } else {
-            System.out.println("Ваши бронирования:");
+            System.out.println("Your Bookings:");
             for (Booking booking : userBookings) {
-                System.out.println("Сеанс ID: " + booking.sessionId +
-                                 ", Место: " + booking.seatNumber);
+                System.out.println("Session ID: " + booking.sessionId +
+                        ", Seat: " + booking.seatNumber);
             }
         }
     }
@@ -367,7 +352,7 @@ public class CinemaController {
      * Show available seats for a session (customer)
      */
     private void showAvailableSeatsForSession() {
-        System.out.print("Введите ID сеанса для просмотра доступных мест: ");
+        System.out.print("Enter Session ID to view available seats: ");
         int sessionId = scanner.nextInt();
 
         bookingService.showAvailableSeats(sessionId);
@@ -377,9 +362,9 @@ public class CinemaController {
      * Add new hall (admin only)
      */
     private void addNewHall() {
-        System.out.print("Введите название зала: ");
+        System.out.print("Enter hall name: ");
         String name = scanner.nextLine();
-        System.out.print("Введите количество мест в зале: ");
+        System.out.print("Enter total number of seats: ");
         int totalSeats = scanner.nextInt();
         scanner.nextLine(); // clear buffer
 
@@ -390,15 +375,15 @@ public class CinemaController {
      * Display all halls (admin only)
      */
     private void displayAllHalls() {
-        List<entity.Hall> halls = hallRepository.getAllHalls();
-        System.out.println("\n=== ЗАЛЫ ===");
+        List<Hall> halls = hallRepository.getAllHalls();
+        System.out.println("\n=== HALLS ===");
         if (halls.isEmpty()) {
-            System.out.println("Нет доступных залов.");
+            System.out.println("No halls available.");
         } else {
-            for (entity.Hall hall : halls) {
+            for (Hall hall : halls) {
                 System.out.println("ID: " + hall.getId() +
-                                 ", Название: " + hall.getName() +
-                                 ", Мест: " + hall.getTotalSeats());
+                        ", Name: " + hall.getName() +
+                        ", Total Seats: " + hall.getTotalSeats());
             }
         }
     }
