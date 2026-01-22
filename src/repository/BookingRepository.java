@@ -21,106 +21,85 @@ public class BookingRepository implements BookingRepositoryInterface {
         }
     }
 
-    @Override
-    public boolean isSeatFree(int sessionId, int seatNumber) {
+    public boolean isSeatFree(int sessionId, int seatNumber) throws java.sql.SQLException {
         String sql = "SELECT * FROM bookings WHERE session_id=? AND seat_number=?";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
 
-            ps.setInt(1, sessionId);
-            ps.setInt(2, seatNumber);
+        ps.setInt(1, sessionId);
+        ps.setInt(2, seatNumber);
 
-            ResultSet rs = ps.executeQuery();
-            return !rs.next(); // если записи нет — место свободно
-
-        } catch (Exception e) {
-            System.out.println("Error checking seat: " + e.getMessage());
-            return false;
-        }
+        ResultSet rs = ps.executeQuery();
+        return !rs.next(); // если записи нет — место свободно
     }
 
-    public void book(int sessionId, int seat, String name) {
+    public void book(int sessionId, int seat, String name) throws java.sql.SQLException {
         String sql = "INSERT INTO bookings(session_id, seat_number, customer) VALUES (?, ?, ?)";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
 
-            ps.setInt(1, sessionId);
-            ps.setInt(2, seat);
-            ps.setString(3, name);
+        ps.setInt(1, sessionId);
+        ps.setInt(2, seat);
+        ps.setString(3, name);
 
-            ps.executeUpdate();
-            System.out.println("Seat booked");
-
-        } catch (Exception e) {
-            System.out.println("Booking error: " + e.getMessage());
-        }
+        ps.executeUpdate();
+        System.out.println("Seat booked");
     }
 
-    public List<Booking> getBookingsBySessionId(int sessionId) {
+    public List<Booking> getBookingsBySessionId(int sessionId) throws java.sql.SQLException {
         List<Booking> list = new ArrayList<>();
         String sql = "SELECT * FROM bookings WHERE session_id=?";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
 
-            ps.setInt(1, sessionId);
-            ResultSet rs = ps.executeQuery();
+        ps.setInt(1, sessionId);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                list.add(new Booking(
-                        rs.getInt("session_id"),
-                        rs.getInt("seat_number"),
-                        rs.getString("customer")
-                ));
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+        while (rs.next()) {
+            list.add(new Booking(
+                    rs.getInt("session_id"),
+                    rs.getInt("seat_number"),
+                    rs.getString("customer")
+            ));
         }
+
         return list;
     }
-    public List<Booking> getBookingsByCustomer(String customerName) {
+    public List<Booking> getBookingsByCustomer(String customerName) throws java.sql.SQLException {
         List<Booking> list = new ArrayList<>();
         String sql = "SELECT * FROM bookings WHERE customer=?";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
 
-            ps.setString(1, customerName);
-            ResultSet rs = ps.executeQuery();
+        ps.setString(1, customerName);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                list.add(new Booking(
-                        rs.getInt("session_id"),
-                        rs.getInt("seat_number"),
-                        rs.getString("customer")
-                ));
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+        while (rs.next()) {
+            list.add(new Booking(
+                    rs.getInt("session_id"),
+                    rs.getInt("seat_number"),
+                    rs.getString("customer")
+            ));
         }
+
         return list;
     }
 
     @Override
-    public boolean cancelBooking(int sessionId, int seatNumber, String customerName) {
+    public boolean cancelBooking(int sessionId, int seatNumber, String customerName) throws java.sql.SQLException {
         String sql = "DELETE FROM bookings WHERE session_id=? AND seat_number=? AND customer=?";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
 
-            ps.setInt(1, sessionId);
-            ps.setInt(2, seatNumber);
-            ps.setString(3, customerName);
+        ps.setInt(1, sessionId);
+        ps.setInt(2, seatNumber);
+        ps.setString(3, customerName);
 
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            System.out.println("Cancel error: " + e.getMessage());
-            return false;
-        }
+        return ps.executeUpdate() > 0;
     }
 }

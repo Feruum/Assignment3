@@ -3,23 +3,19 @@ package service;
 import entity.Session;
 import repository.BookingRepository;
 import repository.SessionRepository;
-import repository.HallRepository;
-import entity.Hall;
 
 public class BookingService {
 
     private BookingRepository bookingRepo = new BookingRepository();
     private SessionRepository sessionRepo = new SessionRepository();
-    private HallRepository hallRepo = new HallRepository();
 
-    public void bookSeat(int sessionId, int seat) {
+    public void bookSeat(int sessionId, int seat) throws java.sql.SQLException {
         Session session = sessionRepo.getSessionById(sessionId);
         if (session == null) {
             System.out.println("Session not found");
             return;
         }
 
-        // Упрощаем - убираем проверку времени
         if (!bookingRepo.isSeatFree(sessionId, seat)) {
             System.out.println("Seat is already taken");
             return;
@@ -29,25 +25,11 @@ public class BookingService {
         System.out.println("Booking successful! Price: $" + session.getPrice());
     }
 
-    public void showAvailableSeats(int sessionId) {
+    public void showAvailableSeats(int sessionId) throws java.sql.SQLException {
+        System.out.println("Available seats for session " + sessionId + ":");
 
-        Session session = sessionRepo.getSessionById(sessionId);
-        if (session == null) {
-            System.out.println("Session not found");
-            return;
-        }
-
-        Hall hall = hallRepo.getHallById(session.getHallId());
-        if (hall == null) {
-            System.out.println("Hall not found");
-            return;
-        }
-
-        int totalSeats = hall.getTotalSeats();
-
-        System.out.println("Available seats:");
-
-        for (int seat = 1; seat <= totalSeats; seat++) {
+        // Упрощаем - показываем места 1-10 для всех сессий
+        for (int seat = 1; seat <= 10; seat++) {
             if (bookingRepo.isSeatFree(sessionId, seat)) {
                 System.out.print(seat + " ");
             }
@@ -55,7 +37,7 @@ public class BookingService {
         System.out.println();
     }
 
-    public void cancelBooking(int sessionId, int seatNumber) {
+    public void cancelBooking(int sessionId, int seatNumber) throws java.sql.SQLException {
         boolean cancelled = bookingRepo.cancelBooking(sessionId, seatNumber, "Anonymous");
 
         if (cancelled) {

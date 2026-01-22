@@ -3,7 +3,7 @@ package repository;
 import entity.Session;
 import interfaces.SessionRepositoryInterface;
 import util.DatabaseConnection;
-
+import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,100 +22,87 @@ public class SessionRepository implements SessionRepositoryInterface {
     }
 
     @Override
-    public void addSession(int movieId, double price, String startTime, int hallId) {
-        // Упрощаем - убираем проверку на прошлое время
-        String sql = "INSERT INTO sessions(movie_id, price, start_time, hall_id) VALUES (?, ?, ?, ?)";
+    public void addSession(int movieId, double price, String startTime) throws SQLException {
+
+        String sql = """
+        INSERT INTO sessions(movie_id, price, start_time)
+        VALUES (?, ?, ?)
+        """;
 
         try (Connection c = DatabaseConnection.connect();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setInt(1, movieId);
             ps.setDouble(2, price);
-            ps.setString(3, startTime);
-            ps.setInt(4, hallId);
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(startTime));
+
             ps.executeUpdate();
-
             System.out.println("Session added");
-
-        } catch (Exception e) {
-            System.out.println("Error adding session: " + e.getMessage());
         }
     }
 
-    // Sessions that have not started yet
-    public List<Session> getAvailableSessions() {
+
+
+    public List<Session> getAvailableSessions() throws java.sql.SQLException {
         List<Session> sessions = new ArrayList<>();
         String sql = "SELECT * FROM sessions ORDER BY start_time";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                sessions.add(new Session(
-                        rs.getInt("id"),
-                        rs.getInt("movie_id"),
-                        rs.getDouble("price"),
-                        rs.getString("start_time"),
-                        rs.getInt("hall_id")
-                ));
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error getting sessions: " + e.getMessage());
+        while (rs.next()) {
+            sessions.add(new Session(
+                    rs.getInt("id"),
+                    rs.getInt("movie_id"),
+                    rs.getDouble("price"),
+                    rs.getString("start_time")
+            ));
         }
+
         return sessions;
     }
 
-    public Session getSessionById(int id) {
+    public Session getSessionById(int id) throws java.sql.SQLException {
         String sql = "SELECT * FROM sessions WHERE id=?";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
 
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
+        ps.setInt(1, id);
+        ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) {
-                return new Session(
-                        rs.getInt("id"),
-                        rs.getInt("movie_id"),
-                        rs.getDouble("price"),
-                        rs.getString("start_time"),
-                        rs.getInt("hall_id")
-                );
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error getting session: " + e.getMessage());
+        if (rs.next()) {
+            return new Session(
+                    rs.getInt("id"),
+                    rs.getInt("movie_id"),
+                    rs.getDouble("price"),
+                    rs.getString("start_time")
+            );
         }
+
         return null;
     }
 
-    @Override
-    public List<Session> getSessionsByMovieId(int movieId) {
+    public List<Session> getSessionsByMovieId(int movieId) throws java.sql.SQLException {
         List<Session> sessions = new ArrayList<>();
         String sql = "SELECT * FROM sessions WHERE movie_id=? ORDER BY start_time";
 
-        try (Connection c = DatabaseConnection.connect();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        Connection c = DatabaseConnection.connect();
+        PreparedStatement ps = c.prepareStatement(sql);
 
-            ps.setInt(1, movieId);
-            ResultSet rs = ps.executeQuery();
+        ps.setInt(1, movieId);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                sessions.add(new Session(
-                        rs.getInt("id"),
-                        rs.getInt("movie_id"),
-                        rs.getDouble("price"),
-                        rs.getString("start_time"),
-                        rs.getInt("hall_id")
-                ));
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error getting sessions by movie: " + e.getMessage());
+        while (rs.next()) {
+            sessions.add(new Session(
+                    rs.getInt("id"),
+                    rs.getInt("movie_id"),
+                    rs.getDouble("price"),
+                    rs.getString("start_time")
+            ));
         }
+
         return sessions;
     }
 }
