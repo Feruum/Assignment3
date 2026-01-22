@@ -24,10 +24,7 @@ public class SessionRepository implements SessionRepositoryInterface {
     @Override
     public void addSession(int movieId, double price, String startTime) throws SQLException {
 
-        String sql = """
-        INSERT INTO sessions(movie_id, price, start_time)
-        VALUES (?, ?, ?)
-        """;
+        String sql = "INSERT INTO sessions(movie_id, price, start_time) VALUES (?, ?, ?)";
 
         try (Connection c = DatabaseConnection.connect();
              PreparedStatement ps = c.prepareStatement(sql)) {
