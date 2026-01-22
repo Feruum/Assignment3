@@ -7,8 +7,6 @@ import util.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,14 +22,8 @@ public class SessionRepository implements SessionRepositoryInterface {
     }
 
     @Override
-    public void addSession(int movieId, double price, LocalDateTime startTime, int hallId) {
-
-        // Simple business rule
-        if (startTime.isBefore(LocalDateTime.now())) {
-            System.out.println("Session cannot be in the past");
-            return;
-        }
-
+    public void addSession(int movieId, double price, String startTime, int hallId) {
+        // Упрощаем - убираем проверку на прошлое время
         String sql = "INSERT INTO sessions(movie_id, price, start_time, hall_id) VALUES (?, ?, ?, ?)";
 
         try (Connection c = DatabaseConnection.connect();
@@ -39,7 +31,7 @@ public class SessionRepository implements SessionRepositoryInterface {
 
             ps.setInt(1, movieId);
             ps.setDouble(2, price);
-            ps.setTimestamp(3, Timestamp.valueOf(startTime));
+            ps.setString(3, startTime);
             ps.setInt(4, hallId);
             ps.executeUpdate();
 
@@ -53,7 +45,7 @@ public class SessionRepository implements SessionRepositoryInterface {
     // Sessions that have not started yet
     public List<Session> getAvailableSessions() {
         List<Session> sessions = new ArrayList<>();
-        String sql = "SELECT * FROM sessions WHERE start_time > NOW() ORDER BY start_time";
+        String sql = "SELECT * FROM sessions ORDER BY start_time";
 
         try (Connection c = DatabaseConnection.connect();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -64,7 +56,7 @@ public class SessionRepository implements SessionRepositoryInterface {
                         rs.getInt("id"),
                         rs.getInt("movie_id"),
                         rs.getDouble("price"),
-                        rs.getTimestamp("start_time").toLocalDateTime(),
+                        rs.getString("start_time"),
                         rs.getInt("hall_id")
                 ));
             }
@@ -89,7 +81,7 @@ public class SessionRepository implements SessionRepositoryInterface {
                         rs.getInt("id"),
                         rs.getInt("movie_id"),
                         rs.getDouble("price"),
-                        rs.getTimestamp("start_time").toLocalDateTime(),
+                        rs.getString("start_time"),
                         rs.getInt("hall_id")
                 );
             }
@@ -103,7 +95,7 @@ public class SessionRepository implements SessionRepositoryInterface {
     @Override
     public List<Session> getSessionsByMovieId(int movieId) {
         List<Session> sessions = new ArrayList<>();
-        String sql = "SELECT * FROM sessions WHERE movie_id=? AND start_time > NOW() ORDER BY start_time";
+        String sql = "SELECT * FROM sessions WHERE movie_id=? ORDER BY start_time";
 
         try (Connection c = DatabaseConnection.connect();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -116,7 +108,7 @@ public class SessionRepository implements SessionRepositoryInterface {
                         rs.getInt("id"),
                         rs.getInt("movie_id"),
                         rs.getDouble("price"),
-                        rs.getTimestamp("start_time").toLocalDateTime(),
+                        rs.getString("start_time"),
                         rs.getInt("hall_id")
                 ));
             }

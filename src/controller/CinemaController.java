@@ -9,63 +9,81 @@ import java.util.Scanner;
 public class CinemaController {
 
     private Scanner scanner = new Scanner(System.in);
-    private UserService userService = new UserService();
     private BookingService bookingService = new BookingService();
-
+    private SessionRepository sessionRepo = new SessionRepository();
     private MovieRepository movieRepo = new MovieRepository();
     private HallRepository hallRepo = new HallRepository();
-    private SessionRepository sessionRepo = new SessionRepository();
+
+    private boolean adminMode = false;
 
     public void start() {
-
         while (true) {
-
-            if (!userService.isLoggedIn()) {
-                System.out.println("1. Register\n2. Login\n0. Exit");
-                int c = scanner.nextInt();
-                scanner.nextLine();
-
-                if (c == 1) register();
-                else if (c == 2) login();
-                else break;
-
+            if (adminMode) {
+                showAdminMenu();
             } else {
-
-                if (userService.isAdmin()) showAdminMenu();
-                else showCustomerMenu();
+                showUserMenu();
             }
         }
     }
 
-    private void showCustomerMenu() {
-        System.out.println("1. Sessions\n2. Seats\n3. Book\n4. Cancel\n9. Logout");
-        int c = scanner.nextInt();
+    private void showUserMenu() {
+        System.out.println("=== User Mode ===");
+        System.out.println("1. Show Sessions\n2. Show Available Seats\n3. Book Seat\n4. Cancel Booking\n9. Toggle Admin Mode\n0. Exit");
+        int choice = scanner.nextInt();
         scanner.nextLine();
 
-        switch (c) {
+        switch (choice) {
             case 1 -> showSessions();
             case 2 -> bookingService.showAvailableSeats(readInt("Session ID: "));
             case 3 -> bookSeat();
             case 4 -> cancelBooking();
-            case 9 -> userService.logout();
+            case 9 -> adminMode = true;
+            case 0 -> { return; }
+        }
+    }
+
+    private void showAdminMenu() {
+        System.out.println("=== Admin Mode ===");
+        System.out.println("1. Add Movie\n2. Add Hall\n3. Add Session\n4. Show All Movies\n5. Show All Halls\n9. Toggle User Mode\n0. Exit");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice) {
+            case 1 -> addMovie();
+            case 2 -> addHall();
+            case 3 -> addSession();
+            case 4 -> showAllMovies();
+            case 5 -> showAllHalls();
+            case 9 -> adminMode = false;
+            case 0 -> { return; }
         }
     }
 
     private void bookSeat() {
-        int s = readInt("Session ID: ");
+        int sessionId = readInt("Session ID: ");
         int seat = readInt("Seat: ");
-        bookingService.bookSeat(s, seat, userService);
+        bookingService.bookSeat(sessionId, seat);
     }
 
     private void cancelBooking() {
-        int s = readInt("Session ID: ");
+        int sessionId = readInt("Session ID: ");
         int seat = readInt("Seat: ");
-        bookingService.cancelBooking(s, seat, userService);
+        bookingService.cancelBooking(sessionId, seat);
     }
 
     private void showSessions() {
         for (Session s : sessionRepo.getAvailableSessions()) {
-            System.out.println(s.id + " price " + s.price + " start " + s.getStartTime());
+            Movie movie = movieRepo.getMovieById(s.movieId);
+            Hall hall = hallRepo.getHallById(s.getHallId());
+
+            if (movie != null && hall != null) {
+                System.out.println("ID: " + s.id +
+                    ", Movie: " + movie.getTitle() +
+                    " (" + movie.getGenre() + ", " + movie.getDuration() + "min)" +
+                    ", Hall: " + hall.getName() +
+                    ", Price: $" + s.price +
+                    ", Start: " + s.getStartTime());
+            }
         }
     }
 
@@ -74,26 +92,64 @@ public class CinemaController {
         return scanner.nextInt();
     }
 
-    private void register() {
-        System.out.print("Username: ");
-        String u = scanner.nextLine();
-        System.out.print("Password: ");
-        String p = scanner.nextLine();
-        System.out.print("Role: ");
-        String r = scanner.nextLine();
-        userService.register(u, p, r);
+    private void addMovie() {
+        System.out.print("Movie title: ");
+        String title = scanner.nextLine();
+        System.out.print("Duration (minutes): ");
+        int duration = scanner.nextInt();
+        scanner.nextLine();
+        System.out.print("Genre: ");
+        String genre = scanner.nextLine();
+
+        movieRepo.addMovie(title, duration, genre);
     }
 
-    private void login() {
-        System.out.print("Username: ");
-        String u = scanner.nextLine();
-        System.out.print("Password: ");
-        String p = scanner.nextLine();
-        userService.login(u, p);
+    private void addHall() {
+        System.out.print("Hall name: ");
+        String name = scanner.nextLine();
+        System.out.print("Total seats: ");
+        int seats = scanner.nextInt();
+        scanner.nextLine();
+
+        hallRepo.addHall(name, seats);
     }
 
-    private void showAdminMenu() {
-        System.out.println("Admin mode (not expanded here)");
-        userService.logout();
+    private void addSession() {
+        System.out.println("Available movies:");
+        showAllMovies();
+
+        System.out.print("Movie ID: ");
+        int movieId = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.println("Available halls:");
+        showAllHalls();
+
+        System.out.print("Hall ID: ");
+        int hallId = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.print("Price: $");
+        double price = scanner.nextDouble();
+        scanner.nextLine();
+
+        System.out.print("Start time (any text): ");
+        String startTime = scanner.nextLine();
+
+        sessionRepo.addSession(movieId, price, startTime, hallId);
+    }
+
+    private void showAllMovies() {
+        for (Movie movie : movieRepo.getAllMovies()) {
+            System.out.println("ID: " + movie.getId() + ", Title: " + movie.getTitle() +
+                ", Genre: " + movie.getGenre() + ", Duration: " + movie.getDuration() + "min");
+        }
+    }
+
+    private void showAllHalls() {
+        for (Hall hall : hallRepo.getAllHalls()) {
+            System.out.println("ID: " + hall.getId() + ", Name: " + hall.getName() +
+                ", Seats: " + hall.getTotalSeats());
+        }
     }
 }

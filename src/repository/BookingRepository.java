@@ -12,7 +12,7 @@ import java.util.List;
 
 public class BookingRepository implements BookingRepositoryInterface {
 
-    @Override
+
     public boolean testConnection() {
         try (Connection c = DatabaseConnection.connect()) {
             return c != null;
@@ -58,7 +58,6 @@ public class BookingRepository implements BookingRepositoryInterface {
         }
     }
 
-    @Override
     public List<Booking> getBookingsBySessionId(int sessionId) {
         List<Booking> list = new ArrayList<>();
         String sql = "SELECT * FROM bookings WHERE session_id=?";
@@ -82,8 +81,6 @@ public class BookingRepository implements BookingRepositoryInterface {
         }
         return list;
     }
-
-    @Override
     public List<Booking> getBookingsByCustomer(String customerName) {
         List<Booking> list = new ArrayList<>();
         String sql = "SELECT * FROM bookings WHERE customer=?";
