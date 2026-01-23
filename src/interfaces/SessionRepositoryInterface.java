@@ -12,5 +12,4 @@ public interface SessionRepositoryInterface extends BaseRepository {
 
     Session getSessionById(int id) throws java.sql.SQLException;
 
-    List<Session> getSessionsByMovieId(int movieId) throws java.sql.SQLException;
 }

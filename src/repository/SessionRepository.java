@@ -9,6 +9,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 
 public class SessionRepository implements SessionRepositoryInterface {
 
@@ -26,17 +30,22 @@ public class SessionRepository implements SessionRepositoryInterface {
 
         String sql = "INSERT INTO sessions(movie_id, price, start_time) VALUES (?, ?, ?)";
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        LocalDateTime dateTime = LocalDateTime.parse(startTime.trim(), formatter);
+        Timestamp timestamp = Timestamp.valueOf(dateTime);
+
         try (Connection c = DatabaseConnection.connect();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setInt(1, movieId);
             ps.setDouble(2, price);
-            ps.setTimestamp(3, java.sql.Timestamp.valueOf(startTime));
+            ps.setTimestamp(3, timestamp);
 
             ps.executeUpdate();
             System.out.println("Session added");
         }
     }
+
 
 
 

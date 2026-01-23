@@ -10,64 +10,49 @@ import java.util.Scanner;
 
 public class CinemaController {
 
-    private Scanner scanner = new Scanner(System.in);
-    private BookingService bookingService = new BookingService();
-    private SessionRepository sessionRepo = new SessionRepository();
-    private MovieRepository movieRepo = new MovieRepository();
-
-    private boolean adminMode = false;
+    private final Scanner scanner = new Scanner(System.in);
+    private final BookingService bookingService = new BookingService();
+    private final SessionRepository sessionRepo = new SessionRepository();
+    private final MovieRepository movieRepo = new MovieRepository();
 
     public void start() throws java.sql.SQLException {
         while (true) {
-            if (adminMode) {
-                showAdminMenu();
-            } else {
-                showUserMenu();
-            }
+            showMenu();
         }
     }
 
-    private void showUserMenu() throws java.sql.SQLException {
-        System.out.println("=== User Mode ===");
-        System.out.println("1. Show Sessions\n2. Show Available Seats\n3. Book Seat\n4. Cancel Booking\n9. Toggle Admin Mode\n0. Exit");
-        int choice = scanner.nextInt();
-        scanner.nextLine();
+    private void showMenu() throws java.sql.SQLException {
+        System.out.println("\n=== Cinema System ===");
+        System.out.println("""
+                1. Show Sessions
+                2. Show Available Seats
+                3. Book Seat
+                4. Cancel Booking
+                5. Add Movie
+                6. Add Session
+                7. Show All Movies
+                8. My Bookings
+                9. Admin: Revenue Report
+                10. Show Top Movie
+                0. Exit
+                """);
+
+        int choice = readInt("Choose option: ");
 
         switch (choice) {
             case 1 -> showSessions();
             case 2 -> bookingService.showAvailableSeats(readInt("Session ID: "));
             case 3 -> bookSeat();
             case 4 -> cancelBooking();
-            case 9 -> adminMode = true;
-            case 0 -> { return; }
+            case 5 -> addMovie();
+            case 6 -> addSession();
+            case 7 -> showAllMovies();
+            case 8 -> showMyBookings();
+            case 9 -> showRevenueReport();
+            case 10 -> bookingService.showTopMovie();
+            case 0 -> System.exit(0);
+            default -> System.out.println("Invalid option");
         }
-    }
-
-    private void showAdminMenu() throws java.sql.SQLException {
-        System.out.println("=== Admin Mode ===");
-        System.out.println("1. Add Movie\n2. Add Session\n3. Show All Movies\n9. Toggle User Mode\n0. Exit");
-        int choice = scanner.nextInt();
-        scanner.nextLine();
-
-        switch (choice) {
-            case 1 -> addMovie();
-            case 2 -> addSession();
-            case 3 -> showAllMovies();
-            case 9 -> adminMode = false;
-            case 0 -> { return; }
-        }
-    }
-
-    private void bookSeat() throws java.sql.SQLException {
-        int sessionId = readInt("Session ID: ");
-        int seat = readInt("Seat: ");
-        bookingService.bookSeat(sessionId, seat);
-    }
-
-    private void cancelBooking() throws java.sql.SQLException {
-        int sessionId = readInt("Session ID: ");
-        int seat = readInt("Seat: ");
-        bookingService.cancelBooking(sessionId, seat);
     }
 
     private void showSessions() throws java.sql.SQLException {
@@ -75,56 +60,95 @@ public class CinemaController {
             Movie movie = movieRepo.getMovieById(s.movieId);
 
             if (movie != null) {
-                System.out.println("ID: " + s.id +
-                    ", Movie: " + movie.getTitle() +
-                    " (" + movie.getGenre() + ", " + movie.getDuration() + " min)" +
-                    ", Price: $" + s.price +
-                    ", Start: " + s.getStartTime());
+                System.out.println(
+                        "Session ID: " + s.id +
+                                ", Movie: " + movie.getTitle() +
+                                " (" + movie.getGenre() + ", " + movie.getDuration() + " min)" +
+                                ", Price: $" + s.price +
+                                ", Start: " + s.getStartTime()
+                );
             }
         }
     }
 
-    private int readInt(String msg) {
-        System.out.print(msg);
-        return scanner.nextInt();
+    private void bookSeat() throws java.sql.SQLException {
+        showSessions();
+        int sessionId = readInt("Session ID: ");
+
+        bookingService.showAvailableSeats(sessionId);
+
+        int seat = readInt("Seat number: ");
+        System.out.print("Your name: ");
+        String name = scanner.nextLine();
+        
+        bookingService.bookSeat(sessionId, seat, name);
+    }
+
+    private void cancelBooking() throws java.sql.SQLException {
+        int sessionId = readInt("Session ID: ");
+        int seat = readInt("Seat number: ");
+        
+        System.out.print("Your name: ");
+        String name = scanner.nextLine();
+        
+        bookingService.cancelBooking(sessionId, seat, name);
     }
 
     private void addMovie() throws java.sql.SQLException {
         System.out.print("Movie title: ");
         String title = scanner.nextLine();
-        System.out.print("Duration (minutes): ");
-        int duration = scanner.nextInt();
-        scanner.nextLine();
+
+        int duration = readInt("Duration (minutes): ");
+
         System.out.print("Genre: ");
         String genre = scanner.nextLine();
 
         movieRepo.addMovie(title, duration, genre);
+        System.out.println("Movie added successfully");
     }
-
 
     private void addSession() throws java.sql.SQLException {
         System.out.println("Available movies:");
         showAllMovies();
 
-        System.out.print("Movie ID: ");
-        int movieId = scanner.nextInt();
-        scanner.nextLine();
+        int movieId = readInt("Movie ID: ");
 
         System.out.print("Price: $");
         double price = scanner.nextDouble();
         scanner.nextLine();
 
-        System.out.print("Start time (any text): ");
+        System.out.print("Start time: ");
         String startTime = scanner.nextLine();
 
         sessionRepo.addSession(movieId, price, startTime);
+        System.out.println("Session added successfully");
     }
 
     private void showAllMovies() throws java.sql.SQLException {
         for (Movie movie : movieRepo.getAllMovies()) {
-            System.out.println("ID: " + movie.getId() + ", Title: " + movie.getTitle() +
-                ", Genre: " + movie.getGenre() + ", Duration: " + movie.getDuration() + " min");
+            System.out.println(
+                    "ID: " + movie.getId() +
+                            ", Title: " + movie.getTitle() +
+                            ", Genre: " + movie.getGenre() +
+                            ", Duration: " + movie.getDuration() + " min"
+            );
         }
     }
 
+    private int readInt(String msg) {
+        System.out.print(msg);
+        int value = scanner.nextInt();
+        scanner.nextLine();
+        return value;
+    }
+    private void showMyBookings() throws java.sql.SQLException {
+        System.out.print("Your name: ");
+        String name = scanner.nextLine();
+        bookingService.showUserBookings(name);
+    }
+
+    private void showRevenueReport() throws java.sql.SQLException {
+        bookingService.printRevenueReport();
+    }
 }
+
