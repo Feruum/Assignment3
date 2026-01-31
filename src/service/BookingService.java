@@ -17,18 +17,28 @@ public class BookingService {
     private MovieRepository movieRepo = new MovieRepository();
 
 
+    private repository.HallRepository hallRepo = new repository.HallRepository();
+
     public void bookSeat(int sessionId, int seat, String customerName) throws java.sql.SQLException {
         Session session = sessionRepo.getSessionById(sessionId);
         if (session == null) {
             System.out.println("Session not found");
             return;
         }
+        
+        entity.Hall hall = hallRepo.getHallById(session.getHallId());
+        int maxSeats = (hall != null) ? hall.getTotalSeats() : 10; // Fallback
+
+        if (seat < 1 || seat > maxSeats) {
+             System.out.println("Invalid seat number! This hall only has " + maxSeats + " seats.");
+             return;
+        }
 
         if (!bookingRepo.isSeatFree(sessionId, seat)) {
             System.out.println("Seat is already taken");
             return;
         }
-
+        
         int bookingCount = bookingRepo.getBookingCount(customerName);
         double discount = 0.0;
         
@@ -44,6 +54,12 @@ public class BookingService {
 
         bookingRepo.book(sessionId, seat, customerName);
         
+        // Update user booking count
+        repository.UserRepository userRepo = new repository.UserRepository();
+        if (userRepo.userExists(customerName)) {
+             userRepo.updateUserBookingCount(customerName, bookingCount + 1);
+        }
+        
         System.out.println("Booking successful!");
         System.out.println("Original Price: $" + session.getPrice());
         if (discount > 0) {
@@ -53,10 +69,19 @@ public class BookingService {
     }
 
     public void showAvailableSeats(int sessionId) throws java.sql.SQLException {
-        System.out.println("Available seats for session " + sessionId + ":");
+        Session session = sessionRepo.getSessionById(sessionId);
+        if (session == null) {
+             System.out.println("Session not found.");
+             return;
+        }
+        
+        entity.Hall hall = hallRepo.getHallById(session.getHallId());
+        int maxSeats = (hall != null) ? hall.getTotalSeats() : 10;
+        
+        System.out.println("Available seats for session " + sessionId + " (Hall: " + (hall!=null ? hall.getName() : "Unknown") + "):");
 
-        // Упрощаем - показываем места 1-10 для всех сессий
-        for (int seat = 1; seat <= 10; seat++) {
+        // Dynamic seat loop
+        for (int seat = 1; seat <= maxSeats; seat++) {
             if (bookingRepo.isSeatFree(sessionId, seat)) {
                 System.out.print(seat + " ");
             }
@@ -75,24 +100,18 @@ public class BookingService {
     }
 
     public void showUserBookings(String customerName) throws java.sql.SQLException {
-        List<Booking> bookings = bookingRepo.getBookingsByCustomer(customerName);
+        List<String> bookings = bookingRepo.getFullBookingDetails(customerName);
         
         if (bookings.isEmpty()) {
             System.out.println("No bookings found for: " + customerName);
             return;
         }
         
+        // Example of Lambda: Sorting strings by length (just for demo) or alphabetically
+        bookings.sort((s1, s2) -> s1.compareTo(s2));
+
         System.out.println("\n=== Bookings for " + customerName + " ===");
-        for (Booking b : bookings) {
-            Session s = sessionRepo.getSessionById(b.sessionId);
-            if (s != null) {
-                Movie m = movieRepo.getMovieById(s.movieId);
-                String movieTitle = (m != null) ? m.getTitle() : "Unknown Movie";
-                System.out.println( "Movie: " + movieTitle + 
-                                  " | Time: " + s.getStartTime() + 
-                                  " | Seat: " + b.seatNumber);
-            }
-        }
+        bookings.forEach(System.out::println);
     }
 
     public void printRevenueReport() throws java.sql.SQLException {

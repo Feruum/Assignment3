@@ -102,13 +102,40 @@ public class BookingRepository implements BookingRepositoryInterface {
                 "ORDER BY cnt DESC " +
                 "LIMIT 1";
         
-        Connection c = DatabaseConnection.connect();
-        PreparedStatement ps = c.prepareStatement(sql);
-        ResultSet rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            return rs.getInt("movie_id");
+        try (Connection c = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt("movie_id");
+            }
         }
         return -1;
+    }
+
+    public List<String> getFullBookingDetails(String customer) throws java.sql.SQLException {
+        List<String> details = new ArrayList<>();
+        String sql = "SELECT m.title, s.start_time, s.price, b.seat_number " +
+                     "FROM bookings b " +
+                     "JOIN sessions s ON b.session_id = s.id " +
+                     "JOIN movies m ON s.movie_id = m.id " +
+                     "WHERE b.customer = ?";
+
+        try (Connection c = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            
+            ps.setString(1, customer);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String detail = String.format("Movie: %s | Time: %s | Seat: %d | Price: $%.2f",
+                            rs.getString("title"),
+                            rs.getString("start_time"),
+                            rs.getInt("seat_number"),
+                            rs.getDouble("price"));
+                    details.add(detail);
+                }
+            }
+        }
+        return details;
     }
 }
